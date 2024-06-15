@@ -6,6 +6,7 @@ import Home from './Home';
 import Login from './Login';
 import SignUp from './SignUp';
 import Onboarding from './OnBoarding';
+import JoinJam from './JoinJam';
 
 function App() {
   return (
@@ -16,6 +17,7 @@ function App() {
         <Route path="/Login" element={<Login/>}/>
         <Route path="/SignUp" element={<SignUp/>}/>
         <Route path="/OnBoarding" element={<Onboarding/>}/>
+        <Route path="/JoinJam" element={<JoinJam/>}/>
       </Routes>
     </Router>
   );
