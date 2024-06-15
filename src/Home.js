@@ -1,38 +1,69 @@
-import React from 'react';
-import { Box, Heading, Text, Button, VStack } from '@chakra-ui/react';
+import React, { useState, useEffect } from 'react';
+import { Box, Text } from '@chakra-ui/react';
+import { useNavigate } from 'react-router-dom';
+import { doc, getDocs, query, where, collection, updateDoc } from 'firebase/firestore';
+import { getAuth, onAuthStateChanged } from 'firebase/auth';
+import { app, db } from './firebaseConfig';
+import Onboarding from './OnBoarding'; // Adjust the import path based on your actual file structure
+import Musician from './MusicianDashboard';
+import VenueOwner from './VenueOwnerDashboard';
 
-const Home = () => {
+const HomePage = () => {
+  const [userRole, setRole] = useState('');
+  const [error, setError] = useState(null);
+
+  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const auth = getAuth(app);
+
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        try {
+          const userQuery = query(collection(db, 'users'), where('email', '==', user.email));
+          const querySnapshot = await getDocs(userQuery);
+
+          if (!querySnapshot.empty) {
+            const userData = querySnapshot.docs[0].data();
+            setRole(userData.role || ''); // Initialize role from existing data
+          } else {
+            setError('User document not found.');
+          }
+        } catch (error) {
+          console.error('Error fetching user document:', error);
+        } finally {
+          setLoading(false);
+        }
+      } else {
+        navigate('/login'); // Redirect to login if user is not authenticated
+      }
+    });
+
+    return () => unsubscribe(); // Cleanup function for unsubscribe
+  }, [navigate]);
+
+  if (loading) {
+    return (
+      <Box p={8} textAlign="center">
+        <Text>Loading...</Text>
+      </Box>
+    );
+  }
+
   return (
-    <Box
-      minH="80vh"
-      display="flex"
-      flexDirection="column"
-      justifyContent="center"
-      alignItems="center"
-      p={4}
-    >
-      <VStack spacing={8} align="center">
-        <Heading as="h1" size="2xl" textAlign="center">
-          Find My Jam
-        </Heading>
-        <Text fontSize="xl" fontWeight="medium" textAlign="center">
-        Connect with musicians and find the perfect spot to jam together.
-        </Text>
-        
-        <VStack spacing={4}>
-            <Button as={Link} to="/CreateJam" bg="white" size="lg">
-              Create a Jam Session
-            </Button>
-            <Button as={Link} to="/JoinJam" bg="white" size="lg">
-              Join a Jam Session
-            </Button>
-            <Button as={Link} to="/BookVenue" bg="white" size="lg">
-              Book a Venue
-            </Button>
-          </VStack>
-      </VStack>
-    </Box>
+    <div>
+      {userRole === 'user' && <Onboarding />}
+      {userRole !== 'user' && (
+        <Box p={8} textAlign="center">
+          <Text>Welcome to your Dashboard!</Text>
+          {/* Render different dashboards based on user roles */}
+          {userRole === 'musician' && <Musician/>}
+          {userRole === 'venueOwner' && <VenueOwner/>}
+        </Box>
+      )}
+    </div>
   );
 };
 
-export default Home;
+export default HomePage;
