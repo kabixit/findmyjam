@@ -59,7 +59,7 @@ const Login = () => {
       }
 
       // Redirect user to dashboard or appropriate page
-      navigate('/home');
+      navigate('/');
     } catch (error) {
       setError(error.message);
       console.error('Google sign-in error:', error.message);

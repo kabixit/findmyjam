@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Box, Text } from '@chakra-ui/react';
 import { useNavigate } from 'react-router-dom';
-import { doc, getDocs, query, where, collection, updateDoc } from 'firebase/firestore';
+import { collection, getDocs, query, where } from 'firebase/firestore';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import { app, db } from './firebaseConfig';
 import Onboarding from './OnBoarding'; // Adjust the import path based on your actual file structure
@@ -10,9 +10,8 @@ import VenueOwner from './VenueOwnerDashboard';
 
 const HomePage = () => {
   const [userRole, setRole] = useState('');
-  const [error, setError] = useState(null);
-
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -31,6 +30,7 @@ const HomePage = () => {
             setError('User document not found.');
           }
         } catch (error) {
+          setError('Error fetching user document: ' + error.message);
           console.error('Error fetching user document:', error);
         } finally {
           setLoading(false);
@@ -51,19 +51,27 @@ const HomePage = () => {
     );
   }
 
-  return (
-    <div>
-      {userRole === 'user' && <Onboarding />}
-      {userRole !== 'user' && (
-        <Box p={8} textAlign="center">
-          <Text>Welcome to your Dashboard!</Text>
-          {/* Render different dashboards based on user roles */}
-          {userRole === 'musician' && <Musician/>}
-          {userRole === 'venueOwner' && <VenueOwner/>}
-        </Box>
-      )}
-    </div>
-  );
+  if (error) {
+    return (
+      <Box p={8} textAlign="center">
+        <Text color="red.500">{error}</Text>
+      </Box>
+    );
+  }
+
+  if (userRole === 'user') {
+    return <Onboarding />;
+  } else if (userRole === 'musician') {
+    return <Musician />;
+  } else if (userRole === 'venueOwner') {
+    return <VenueOwner />;
+  } else {
+    return (
+      <Box p={8} textAlign="center">
+        <Text>Unknown user role.</Text>
+      </Box>
+    );
+  }
 };
 
 export default HomePage;

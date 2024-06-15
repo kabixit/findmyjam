@@ -6,6 +6,7 @@ import { app, db } from './firebaseConfig';
 
 const MusicianDashboard = () => {
   const [jamSessions, setJamSessions] = useState([]);
+  const [venues, setVenues] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [newSessionForm, setNewSessionForm] = useState({
@@ -16,9 +17,21 @@ const MusicianDashboard = () => {
     skillLevel: '',
     inviteFriends: '',
   });
-
+  const [selectedVenue, setSelectedVenue] = useState(null);
 
   useEffect(() => {
+    const fetchVenues = async () => {
+      try {
+        const venuesQuery = query(collection(db, 'venues'));
+        const querySnapshot = await getDocs(venuesQuery);
+        const venuesData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        setVenues(venuesData);
+      } catch (error) {
+        setError('Error fetching venues: ' + error.message);
+        console.error('Error fetching venues:', error);
+      }
+    };
+
     const fetchJamSessions = async () => {
       const auth = getAuth(app);
       const currentUser = auth.currentUser;
@@ -41,6 +54,7 @@ const MusicianDashboard = () => {
       }
     };
 
+    fetchVenues();
     fetchJamSessions();
   }, []);
 
@@ -59,13 +73,23 @@ const MusicianDashboard = () => {
     try {
       const sessionData = {
         ...newSessionForm,
+        venueId: selectedVenue.id,
         hostId: currentUser.uid,
       };
 
       const sessionRef = await addDoc(collection(db, 'jamSessions'), sessionData);
       console.log('Jam session created successfully:', sessionRef.id);
 
-      // Redirect to session details or dashboard
+      setNewSessionForm({
+        time: '',
+        location: '',
+        genre: '',
+        requiredInstruments: '',
+        skillLevel: '',
+        inviteFriends: '',
+      });
+      setSelectedVenue(null);
+
     } catch (error) {
       setError('Failed to create jam session: ' + error.message);
       console.error('Error creating jam session:', error);
@@ -75,6 +99,10 @@ const MusicianDashboard = () => {
   const handleChange = (event) => {
     const { name, value } = event.target;
     setNewSessionForm({ ...newSessionForm, [name]: value });
+  };
+
+  const handleSelectVenue = (venue) => {
+    setSelectedVenue(venue);
   };
 
   if (loading) {
@@ -90,8 +118,8 @@ const MusicianDashboard = () => {
       <Heading as="h1" size="xl" mb={4}>Musician Dashboard</Heading>
 
       {/* Create Jam Session Form */}
-      <Box bg="gray.100" p={4} mb={4} borderRadius="md">
-        <Heading as="h2" size="md" mb={2}>Create a Jam Session</Heading>
+      <Box bg="black" p={4} mb={4} borderRadius="md">
+       
         <form onSubmit={handleCreateSession}>
           <Stack spacing={4}>
             <Input
@@ -102,14 +130,33 @@ const MusicianDashboard = () => {
               placeholder="Time"
               required
             />
-            <Input
-              type="text"
-              name="location"
-              value={newSessionForm.location}
-              onChange={handleChange}
-              placeholder="Location"
-              required
-            />
+            <Stack spacing={2}>
+              <Text fontWeight="bold">Select Venue:</Text>
+              {venues.length === 0 ? (
+                <Text>No venues found.</Text>
+              ) : (
+                venues.map(venue => (
+                  <Box key={venue.id} bg="black" p={4} boxShadow="md" borderRadius="md">
+                    <Text><strong>Name:</strong> {venue.name}</Text>
+                    <Text><strong>Location:</strong> {venue.location}</Text>
+                    <Text><strong>Availability:</strong> {venue.availability}</Text>
+                    <Text><strong>Price per hour:</strong> ${venue.price}</Text>
+                    <Button colorScheme="blue" onClick={() => handleSelectVenue(venue)}>Select Venue</Button>
+                  </Box>
+                ))
+              )}
+            </Stack>
+            {selectedVenue && (
+              <>
+                <Text mt={4} fontWeight="bold">Selected Venue:</Text>
+                <Box bg="black" p={4} boxShadow="md" borderRadius="md">
+                  <Text><strong>Name:</strong> {selectedVenue.name}</Text>
+                  <Text><strong>Location:</strong> {selectedVenue.location}</Text>
+                  <Text><strong>Availability:</strong> {selectedVenue.availability}</Text>
+                  <Text><strong>Price per hour:</strong> ${selectedVenue.price}</Text>
+                </Box>
+              </>
+            )}
             <Input
               type="text"
               name="genre"
@@ -141,14 +188,14 @@ const MusicianDashboard = () => {
               placeholder="Invite Friends"
               rows={2}
             />
-            <Button type="submit" colorScheme="blue">Create Session</Button>
+            <Button type="submit" colorScheme="blue" disabled={!selectedVenue}>Create Session</Button>
           </Stack>
         </form>
         {error && <Text color="red.500" mt={2}>{error}</Text>}
       </Box>
 
       {/* List of Jam Sessions */}
-      <Box>
+      <Box bg="black">
         <Heading as="h2" size="md" mb={2}>Your Jam Sessions</Heading>
         {jamSessions.length === 0 ? (
           <Text>No jam sessions found.</Text>
