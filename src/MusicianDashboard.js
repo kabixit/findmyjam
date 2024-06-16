@@ -3,9 +3,11 @@ import { Box, Text, Stack, Button, Heading, Input, Grid, Checkbox } from '@chakr
 import { collection, getDocs, query, where, addDoc, updateDoc, doc } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 import { app, db } from './firebaseConfig';
+import YourJam from './YourJam';
+import JoinJam from './JoinJam';
+import HostedJams from './HostedJams';
 
 const MusicianDashboard = () => {
-  const [jamSessions, setJamSessions] = useState([]);
   const [venues, setVenues] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -30,31 +32,8 @@ const MusicianDashboard = () => {
     }
   };
 
-  const fetchJamSessions = async () => {
-    const auth = getAuth(app);
-    const currentUser = auth.currentUser;
-
-    if (!currentUser) {
-      setError('User not authenticated.');
-      return;
-    }
-
-    try {
-      const sessionsQuery = query(collection(db, 'jamSessions'), where('hostId', '==', currentUser.email));
-      const querySnapshot = await getDocs(sessionsQuery);
-      const sessionsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      setJamSessions(sessionsData);
-    } catch (error) {
-      setError('Error fetching jam sessions: ' + error.message);
-      console.error('Error fetching jam sessions:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
     fetchVenues();
-    fetchJamSessions();
   }, []);
 
   const handleCreateSession = async (event) => {
@@ -81,8 +60,14 @@ const MusicianDashboard = () => {
       const venueDoc = querySnapshot.docs[0]; // Assuming there's only one venue with a unique name
       const venueData = venueDoc.data();
 
+      // Fetch current size of jamSessions to generate new jamId
+      const jamSessionsQuery = await getDocs(collection(db, 'jamSessions'));
+      const size = jamSessionsQuery.size;
+      const newCount = size + 1;
+
       const sessionData = {
         ...newSessionForm,
+        jamId: newCount, // Assign new jamId
         venueId: venueData.venueId,
         hostId: currentUser.email, // Use email as hostId
         membersCount: 1, // Initialize membersCount to 1
@@ -103,7 +88,7 @@ const MusicianDashboard = () => {
       setSelectedVenue(null);
 
       // Refetch the jam sessions to update the list
-      fetchJamSessions();
+
 
     } catch (error) {
       setError('Failed to create jam session: ' + error.message);
@@ -236,31 +221,11 @@ const MusicianDashboard = () => {
         {error && <Text color="red.500" mt={2}>{error}</Text>}
       </Box>
 
-      {/* List of Jam Sessions */}
-      <Box bg="black">
-        <Heading as="h2" size="md" mb={2} color="white">Your Jam Sessions</Heading>
-        {jamSessions.length === 0 ? (
-          <Text color="white">No jam sessions found.</Text>
-        ) : (
-          <Stack spacing={4}>
-            {jamSessions.map(session => (
-              <Box key={session.id} bg="black" p={4} boxShadow="md" borderRadius="md">
-                <Text><strong>Time:</strong> {session.time}</Text>
-                <Text><strong>Location:</strong> {session.location}</Text>
-                <Text><strong>Genre:</strong> {session.genre}</Text>
-                <Text>
-                <strong>Required Instruments:</strong>{' '}
-                {session.requiredInstruments.length === 1
-                    ? session.requiredInstruments[0]
-                    : session.requiredInstruments.join(', ')}
-                </Text>
-                <Text><strong>Jammers:</strong> {session.membersCount}</Text>
+      {/* Hosted Jam Sessions */}
+      <HostedJams />
 
-              </Box>
-            ))}
-          </Stack>
-        )}
-      </Box>
+      <YourJam />
+      <JoinJam />
     </Box>
   );
 };

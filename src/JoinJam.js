@@ -1,21 +1,23 @@
-// JoinJam.js
-
 import React, { useState, useEffect } from 'react';
-import { Box, Text, Stack, Button, Heading } from '@chakra-ui/react';
-import { collection, getDocs, query, where, doc, updateDoc, getDoc } from 'firebase/firestore';
-import { getAuth, onAuthStateChanged } from 'firebase/auth';
+import { Box, Text, Stack, Button, Heading, useToast } from '@chakra-ui/react';
+import { collection, getDocs, query, where, doc, updateDoc, addDoc, getDoc } from 'firebase/firestore';
+import { getAuth } from 'firebase/auth';
 import { app, db } from './firebaseConfig';
+import { useNavigate } from 'react-router-dom';
 
 const JoinJam = () => {
   const [sessions, setSessions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  const navigate= useNavigate();
+  const toast = useToast(); 
+
   useEffect(() => {
     const auth = getAuth(app);
     let unsubscribeFromAuth = null;
 
-    unsubscribeFromAuth = onAuthStateChanged(auth, async (user) => {
+    unsubscribeFromAuth = auth.onAuthStateChanged(async (user) => {
       if (user) {
         try {
           const currentUser = auth.currentUser;
@@ -78,7 +80,7 @@ const JoinJam = () => {
     try {
       // Fetch the session document to get current details
       const sessionRef = doc(db, 'jamSessions', sessionId);
-      const sessionDoc = await sessionRef.get();
+      const sessionDoc = await getDoc(sessionRef)
 
       if (!sessionDoc.exists()) {
         setError('Session not found.');
@@ -90,10 +92,31 @@ const JoinJam = () => {
       // Update the session to add the current user as a member
       await updateDoc(sessionRef, {
         membersCount: sessionData.membersCount + 1,
-        members: [...sessionData.members, currentUser.email]
+
       });
 
-      // Optionally, you might want to update the UI or navigate the user somewhere else after joining.
+      // Add document to jamMembers collection
+      const jamMemberData = {
+        sessionId: sessionDoc.id,
+        venueId: sessionData.venueId,
+        hostId: sessionData.hostId,
+        userEmail: currentUser.email,
+        joinedAt: new Date()
+      };
+
+      await addDoc(collection(db, 'jamMembers'), jamMemberData);
+
+      // Show toast notification
+      toast({
+        title: 'Joined Jam Session',
+        description: 'You have successfully joined the jam session!',
+        status: 'success',
+        duration: 5000,
+        isClosable: true,
+      });
+
+      // Navigate to home page
+      navigate('/');
 
     } catch (error) {
       setError('Failed to join jam session: ' + error.message);
@@ -108,19 +131,18 @@ const JoinJam = () => {
       </Box>
     );
   }
-
   return (
     <Box p={8}>
 
       {/* List of Jam Sessions */}
       <Box bg="black">
-        <Heading as="h2" size="md" mb={2} color="white">Available Jam Sessions</Heading>
+        <Text size="xxl" mb={2} color="white">Available Jams to join</Text>
         {sessions.length === 0 ? (
           <Text color="white">No available jam sessions found.</Text>
         ) : (
           <Stack spacing={4}>
             {sessions.map(session => (
-              <Box key={session.id} bg="black" p={4} boxShadow="md" borderRadius="md">
+              <Box key={session.id} bg="black" p={4} boxShadow="md" borderRadius="md" border="2px dashed #fff">
                 <Text><strong>Time:</strong> {session.time}</Text>
                 <Text><strong>Location:</strong> {session.venueLocation}</Text>
                 <Text><strong>Venue:</strong> {session.venueName}</Text>
