@@ -88,8 +88,6 @@ const MusicianDashboard = () => {
       setSelectedVenue(null);
 
       // Refetch the jam sessions to update the list
-
-
     } catch (error) {
       setError('Failed to create jam session: ' + error.message);
       console.error('Error creating jam session:', error);
@@ -132,7 +130,6 @@ const MusicianDashboard = () => {
 
   return (
     <Box p={8}>
-
       {/* Create Jam Session Form */}
       <Box bg="black" p={4} mb={4} borderRadius="md">
         <form onSubmit={handleCreateSession}>
@@ -152,7 +149,10 @@ const MusicianDashboard = () => {
                   <Text color="white"><strong>Location:</strong> {venue.location}</Text>
                   <Text color="white"><strong>Availability:</strong> {venue.availability}</Text>
                   <Text color="white"><strong>Price per hour:</strong> ${venue.price}</Text>
-                  <Button colorScheme={selectedVenue && selectedVenue.id === venue.id ? "red" : "green"} onClick={() => handleSelectVenue(venue)}>
+                  <Button
+                    colorScheme={selectedVenue && selectedVenue.id === venue.id ? "red" : "green"}
+                    onClick={() => handleSelectVenue(venue)}
+                  >
                     {selectedVenue && selectedVenue.id === venue.id ? "Unselect Venue" : "Select Venue"}
                   </Button>
                 </Box>
@@ -224,7 +224,10 @@ const MusicianDashboard = () => {
       {/* Hosted Jam Sessions */}
       <HostedJams />
 
+      {/* Your Jam Sessions */}
       <YourJam />
+
+      {/* Join Jam Sessions */}
       <JoinJam />
     </Box>
   );

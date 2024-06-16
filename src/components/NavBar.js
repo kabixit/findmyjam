@@ -1,14 +1,34 @@
-import React, { useState } from 'react';
-import { Box, Flex, Button, Link, IconButton, useDisclosure, Spacer } from '@chakra-ui/react';
+import React, { useState, useEffect } from 'react';
+import { Box, Flex, Button, Spacer } from '@chakra-ui/react';
 import { useNavigate } from 'react-router-dom';
-import { HamburgerIcon, CloseIcon } from '@chakra-ui/icons';
+import { getAuth, onAuthStateChanged, signOut } from 'firebase/auth';
+import { app } from '../firebaseConfig'; // Ensure you import your firebase configuration
 
 const NavBar = () => {
   const navigate = useNavigate();
-  const { isOpen, onOpen, onClose } = useDisclosure();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const auth = getAuth(app);
 
-  const handleLoginLogout = () => setIsLoggedIn(!isLoggedIn);
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setIsLoggedIn(!!user);
+    });
+
+    return () => unsubscribe();
+  }, [auth]);
+
+  const handleLoginLogout = async () => {
+    if (isLoggedIn) {
+      try {
+        await signOut(auth);
+        setIsLoggedIn(false);
+      } catch (error) {
+        console.error('Error logging out:', error);
+      }
+    } else {
+      navigate('/login');
+    }
+  };
 
   return (
     <Box
@@ -26,18 +46,6 @@ const NavBar = () => {
         </Box>
         <Spacer />
         <Box display={{ base: 'none', md: 'flex' }} alignItems="center">
-          <Button as={Link} to="/" variant="ghost" onClick={onClose} color="white">
-            Home
-          </Button>
-          <Button as={Link} to="/create-jam" variant="ghost" onClick={onClose} color="white">
-            Create Jam
-          </Button>
-          <Button as={Link} to="/join-jam" variant="ghost" onClick={onClose} color="white">
-            Join Jam
-          </Button>
-          <Button as={Link} to="/book-venue" variant="ghost" onClick={onClose} color="white">
-            Book Venue
-          </Button>
           <Button
             onClick={handleLoginLogout}
             backgroundColor="white"
@@ -47,45 +55,7 @@ const NavBar = () => {
             {isLoggedIn ? 'Logout' : 'Login'}
           </Button>
         </Box>
-        <IconButton
-          aria-label="Toggle menu"
-          icon={isOpen ? <CloseIcon /> : <HamburgerIcon />}
-          display={{ base: 'flex', md: 'none' }}
-          onClick={isOpen ? onClose : onOpen}
-          color="white"
-        />
       </Flex>
-      {isOpen && (
-        <Flex
-          direction="column"
-          alignItems="center"
-          display={{ md: 'none' }}
-          backgroundColor="#000"
-          padding={4}
-        >
-          <Button as={Link} to="/" variant="ghost" width="100%" onClick={onClose} color="white">
-            Home
-          </Button>
-          <Button as={Link} to="/create-jam" variant="ghost" width="100%" onClick={onClose} color="white">
-            Create Jam
-          </Button>
-          <Button as={Link} to="/join-jam" variant="ghost" width="100%" onClick={onClose} color="white">
-            Join Jam
-          </Button>
-          <Button as={Link} to="/book-venue" variant="ghost" width="100%" onClick={onClose} color="white">
-            Book Venue
-          </Button>
-          <Button
-            onClick={handleLoginLogout}
-            backgroundColor="white"
-            color="black"
-            width="100%"
-            marginTop="8px"
-          >
-            {isLoggedIn ? 'Logout' : 'Login'}
-          </Button>
-        </Flex>
-      )}
     </Box>
   );
 };
