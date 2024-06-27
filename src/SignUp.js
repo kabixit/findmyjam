@@ -29,7 +29,7 @@ const SignUp = () => {
         role: 'user', // Default role for regular sign-up
       });
       console.log('New user added to Firestore with ID:', newUserRef.id);
-      navigate('/dashboard');
+      navigate('/home');
     } catch (error) {
       setError(error.message);
       console.error('Sign-up error:', error.message);
@@ -63,7 +63,7 @@ const SignUp = () => {
         console.log('User already exists in Firestore');
       }
 
-      navigate('/dashboard');
+      navigate('/home');
     } catch (error) {
       setError(error.message);
       console.error('Google sign-in error:', error.message);
