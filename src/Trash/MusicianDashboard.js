@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Box, Text, Stack, Button, Heading, Input, Grid, Checkbox } from '@chakra-ui/react';
 import { collection, getDocs, query, where, addDoc, updateDoc, doc } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
-import { app, db } from './firebaseConfig';
-import YourJam from './YourJam';
+import { app, db } from '../../firebaseConfig';
+import YourJam from '../../YourJam';
 import JoinJam from './JoinJam';
 import HostedJams from './HostedJams';
 

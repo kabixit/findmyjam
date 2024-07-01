@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Box, Text, Stack, Input, Button, Center, Grid } from '@chakra-ui/react';
 import { collection, addDoc, getDocs, query, where } from 'firebase/firestore';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
-import { app, db } from './firebaseConfig';
+import { app, db } from '../firebaseConfig';
 
 const VenueOwnerDashboard = () => {
   const [venues, setVenues] = useState([]);

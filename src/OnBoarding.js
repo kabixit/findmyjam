@@ -3,7 +3,7 @@ import { Box, Text, Stack, Button, Radio, RadioGroup } from '@chakra-ui/react';
 import { useNavigate } from 'react-router-dom';
 import { doc, getDocs, query, where, collection, updateDoc } from 'firebase/firestore';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
-import { app, db } from './firebaseConfig';
+import { app, db } from '../../firebaseConfig';
 
 const Onboarding = () => {
   const [role, setRole] = useState('');

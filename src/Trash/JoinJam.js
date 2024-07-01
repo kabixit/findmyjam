@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Box, Text, Stack, Button, Heading, useToast } from '@chakra-ui/react';
 import { collection, getDocs, query, where, doc, updateDoc, addDoc, getDoc } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
-import { app, db } from './firebaseConfig';
+import { app, db } from '../../firebaseConfig';
 import { useNavigate } from 'react-router-dom';
 
 const JoinJam = () => {

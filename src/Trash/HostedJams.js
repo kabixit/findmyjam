@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Box, Text, Stack } from '@chakra-ui/react';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
-import { app, db } from './firebaseConfig';
+import { app, db } from '../firebaseConfig';
 
 const HostedJams = () => {
   const [jamSessions, setJamSessions] = useState([]);

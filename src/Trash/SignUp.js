@@ -1,45 +1,50 @@
 import React, { useState } from 'react';
-import { getAuth, signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
-import { app, db } from './firebaseConfig';
-import { Box, Text, Input, Stack, Button, Image, Link } from '@chakra-ui/react';
-import { collection, addDoc, getDocs, query, where } from 'firebase/firestore';
+import { getAuth, createUserWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
+import { app, db } from '../firebaseConfig';
+import { Box, Text, Input, Stack, Button, Link, Image } from '@chakra-ui/react';
 import { useNavigate } from 'react-router-dom';
+import { collection, addDoc, query, where, getDocs } from 'firebase/firestore';
 
-const Login = () => {
+const SignUp = () => {
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState(null);
   const navigate = useNavigate();
 
-  // Function to handle the login process
-  const handleLogin = async (e) => {
+  // Function to handle the sign-up process
+  const handleSignUp = async (e) => {
     e.preventDefault();
     const auth = getAuth(app);
     try {
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
-      console.log('User logged in:', user);
-      navigate('/dashboard');
+      console.log('User signed up:', user);
+
+      // Add additional user details to Firestore database
+      const usersRef = collection(db, 'users');
+      const newUserRef = await addDoc(usersRef, {
+        name: name,
+        email: email,
+        role: 'user', // Default role for regular sign-up
+      });
+      console.log('New user added to Firestore with ID:', newUserRef.id);
+      navigate('/home');
     } catch (error) {
       setError(error.message);
-      console.error('Login error:', error.message);
+      console.error('Sign-up error:', error.message);
     }
   };
 
-  // Function to navigate to SignUp page
-  const navigateToSignUp = () => {
-    navigate('/SignUp'); // Assuming '/SignUp' is your signup page route
-  };
-
   // Function to handle Google sign-in
-  const handleGoogleLogin = async () => {
+  const handleGoogleSignUp = async () => {
     const auth = getAuth(app);
     const provider = new GoogleAuthProvider();
     
     try {
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
-      console.log('User signed in with Google:', user);
+      console.log('User signed up with Google:', user);
 
       // Check if user already exists in Firestore database
       const usersRef = collection(db, 'users');
@@ -49,8 +54,8 @@ const Login = () => {
       if (querySnapshot.empty) {
         // Add the user to Firestore database if they don't exist
         const newUserRef = await addDoc(usersRef, {
+          name: user.displayName,
           email: user.email,
-          displayName: user.displayName,
           role: 'user', // Default role for Google sign-in
         });
         console.log('New user added to Firestore with ID:', newUserRef.id);
@@ -58,19 +63,37 @@ const Login = () => {
         console.log('User already exists in Firestore');
       }
 
-      // Redirect user to dashboard or appropriate page
-      navigate('/');
+      navigate('/home');
     } catch (error) {
       setError(error.message);
       console.error('Google sign-in error:', error.message);
     }
   };
+
+  // Function to navigate back to login page
+  const navigateToLogin = () => {
+    navigate('/'); // Assuming '/' is your login page route
+  };
+
   return (
     <div className="screen" style={{ backgroundColor: '#000', color: '#fff', height: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
       <Box p={8} borderRadius="8px" border="1px solid #fff" textAlign="center">
-        <Text fontSize="2xl" fontWeight="bold" mb={4}>Login</Text>
-        <form onSubmit={handleLogin}>
+        <Text fontSize="2xl" fontWeight="bold" mb={4}>Sign Up</Text>
+        <form onSubmit={handleSignUp}>
           <Stack spacing={4}>
+            <Input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Name"
+              variant="filled"
+              color="white"
+              border="1px dashed #fff"
+              _focus={{ borderColor: '#eee' }}
+              bg="rgba(0, 0, 0, 0.9)"
+              _hover={{ bgGradient: 'linear(to-r, rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.4))' }}
+              borderRadius="15px"
+            />
             <Input
               type="email"
               value={email}
@@ -98,7 +121,7 @@ const Login = () => {
               borderRadius="15px"
             />
             <Button
-             marginTop="10px"
+              marginTop="10px"
               type="submit"
               color="black"
               size="md"
@@ -108,7 +131,7 @@ const Login = () => {
               _hover={{ filter: 'brightness(200%)' }}
               transition="filter 0.3s ease-in-out"
             >
-              Login
+              Sign Up
             </Button>
             <Button
               marginTop="10px"
@@ -116,23 +139,23 @@ const Login = () => {
               bg="rgba(217, 217, 217, 0.1)"
               color="white"
               leftIcon={<Image src="Google.png" alt="Google Icon" />}
-              onClick={handleGoogleLogin}
+              onClick={handleGoogleSignUp}
               borderRadius="15px"
               _hover={{ bgGradient: 'linear(to-r, rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.4))', filter: 'brightness(85%)', opacity: 0.9, transition: 'filter 0.4s ease, opacity 0.4s ease' }}
             >
-              Sign in with Google
+              Sign Up with Google
             </Button>
           </Stack>
         </form>
         {error && <Text color="red.500" mt={2}>{error}</Text>}
         <Box marginTop="20px">
-        <Link  onClick={navigateToSignUp} color="white" fontWeight="bold" mt={4} cursor="pointer">
-          Don't have an account? Sign Up
-        </Link>
+          <Link onClick={navigateToLogin} color="white" fontWeight="bold" mt={4} cursor="pointer">
+            Already have an account? Login
+          </Link>
         </Box>
       </Box>
     </div>
   );
 };
 
-export default Login;
+export default SignUp;
