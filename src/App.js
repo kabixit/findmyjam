@@ -4,6 +4,7 @@ import Navbar from './components/NavBar';
 
 import Home from './Home';
 import AddStudio from './AddStudio';
+import StartJam from './StartJam';
 
 
 function App() {
@@ -13,6 +14,7 @@ function App() {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/AddStudio" element={<AddStudio/>}/>
+        <Route path="/StartJam" element={<StartJam/>}/>
       </Routes>
     </Router>
   );

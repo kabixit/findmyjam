@@ -80,7 +80,7 @@ const AddStudio = () => {
       instruments: Object.keys(instrumentCheckboxes).filter(key => instrumentCheckboxes[key]),
       media,
       description,
-      ownerId: user.uid, // Assuming user is authenticated and has a UID
+      ownerId: user.email, // Assuming user is authenticated and has a UID
       createdAt: new Date(),
       status: 'open' // Default status set directly here
     };
