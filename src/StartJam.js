@@ -70,7 +70,7 @@ const StartJam = ({ currentLocation }) => {
   
       // Assuming there is only one document per user email, so we take the first one
       const userDoc = querySnapshot.docs[0];
-  
+      console.log(userDoc.data().role);
       // Check if user has the 'jammer' role
       if (userDoc.data().role !== 'jammer') {
         toast({
@@ -91,12 +91,14 @@ const StartJam = ({ currentLocation }) => {
         genre,
         requiredInstruments,
         venueType,
-        studioId: venueType === 'studio' ? selectedVenue.id : null,
-        createdBy: user.uid,
+        studioId: venueType === 'studio' ? selectedVenue.studioId : null,
+        createdBy: user.email,
         description,
         membersCount: 1,
         createdAt: new Date(),
       };
+
+      console.log(sessionData);
   
       await addDoc(collection(db, 'jamSessions'), sessionData);
       toast({
@@ -125,7 +127,7 @@ const StartJam = ({ currentLocation }) => {
       });
     }
   };
-  
+
   const handleCheckboxChange = (instrument) => {
     const isChecked = requiredInstruments.includes(instrument);
     if (isChecked) {
