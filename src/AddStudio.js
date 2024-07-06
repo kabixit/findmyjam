@@ -3,7 +3,7 @@ import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import { app, db, storage } from './firebaseConfig';
 import { Box, Text, Button, useDisclosure, Input, Textarea, FormControl, FormLabel, Checkbox, Stack } from '@chakra-ui/react';
 import { useNavigate } from 'react-router-dom';
-import { collection, addDoc, doc, getDoc } from 'firebase/firestore';
+import { collection, addDoc, doc, getDoc, getDocs } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import VenueOwnerLogin from './VenueOwnerLogin';
 import VenueOwnerRegister from './VenueOwnerRegister';
@@ -69,11 +69,19 @@ const AddStudio = () => {
 
   // Function to handle adding a studio
   const handleAddStudio = async () => {
-    // Implement your studio addition logic here
     console.log('Adding studio...');
 
-    // Example: Adding studio data to Firestore
+    // Get the number of documents in the 'venues' collection
+    const venuesCollection = collection(db, 'venues');
+    const venuesSnapshot = await getDocs(venuesCollection);
+    const venueCount = venuesSnapshot.size;
+
+    // Generate a new studioId
+    const newStudioId = (venueCount + 1).toString().padStart(3, '0');
+
+    // Prepare studio data
     const studioData = {
+      studioId: newStudioId,
       studioName,
       location,
       price,
@@ -86,7 +94,7 @@ const AddStudio = () => {
     };
 
     try {
-      const docRef = await addDoc(collection(db, 'venues'), studioData);
+      const docRef = await addDoc(venuesCollection, studioData);
       console.log('Studio added with ID:', docRef.id);
       // Redirect or show success message
       navigate('/dashboard'); // Redirect to dashboard or another appropriate page
@@ -133,7 +141,7 @@ const AddStudio = () => {
   if (!user) {
     return (
       <Box p={8} textAlign="center">
-        <Text mt={50}fontSize={28} mb={5}>You haven't Logged in yet!</Text>
+        <Text mt={50} fontSize={28} mb={5}>You haven't Logged in yet!</Text>
         <Button onClick={onLoginOpen} variant="solid" color="black" bg="white" size="lg" mr={4}>
           Login
         </Button>
