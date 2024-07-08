@@ -5,6 +5,8 @@ import Navbar from './components/NavBar';
 import Home from './Home';
 import AddStudio from './AddStudio';
 import StartJam from './StartJam';
+import Login from './Login';
+import SignUp from './SignUp';
 
 
 function App() {
@@ -15,6 +17,8 @@ function App() {
         <Route path="/" element={<Home />} />
         <Route path="/AddStudio" element={<AddStudio/>}/>
         <Route path="/StartJam" element={<StartJam/>}/>
+        <Route path="/Login" element={<Login/>}/>
+        <Route path="/SignUp" element={<SignUp/>}/>
       </Routes>
     </Router>
   );

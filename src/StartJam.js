@@ -15,7 +15,7 @@ import {
   Stack,
 } from '@chakra-ui/react';
 import { db } from './firebaseConfig';
-import { collection, addDoc, getDocs, query, where, doc, getDoc } from 'firebase/firestore';
+import { collection, addDoc, getDocs, query, where, doc, getDoc, setDoc } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
@@ -34,6 +34,7 @@ const StartJam = ({ currentLocation }) => {
   const [description, setDescription] = useState('');
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showRegisterModal, setShowRegisterModal] = useState(false); // State to manage register modal
+  const [toastMessage, setToastMessage] = useState('');
   const toast = useToast();
 
   useEffect(() => {
@@ -70,7 +71,7 @@ const StartJam = ({ currentLocation }) => {
   
       // Assuming there is only one document per user email, so we take the first one
       const userDoc = querySnapshot.docs[0];
-      console.log(userDoc.data().role);
+  
       // Check if user has the 'jammer' role
       if (userDoc.data().role !== 'jammer') {
         toast({
@@ -83,8 +84,14 @@ const StartJam = ({ currentLocation }) => {
         return;
       }
   
+      // Fetch current count of jam sessions to calculate next jamId
+      const jamSessionsRef = collection(db, 'jamSessions');
+      const jamSessionsSnapshot = await getDocs(jamSessionsRef);
+      const jamId = jamSessionsSnapshot.size + 1; // Calculate new jamId
+  
       // Continue with creating the jam session using user data if permissions are correct
       const sessionData = {
+        jamId,
         name,
         date,
         location: venueType === 'public' ? currentLocation : selectedVenue.location,
@@ -97,8 +104,6 @@ const StartJam = ({ currentLocation }) => {
         membersCount: 1,
         createdAt: new Date(),
       };
-
-      console.log(sessionData);
   
       await addDoc(collection(db, 'jamSessions'), sessionData);
       toast({
@@ -107,6 +112,12 @@ const StartJam = ({ currentLocation }) => {
         duration: 3000,
         isClosable: true,
       });
+  
+      // Update the status of selected venue to 'closed' in venues collection
+      if (venueType === 'studio' && selectedVenue) {
+        const venueDocRef = doc(db, 'venues', selectedVenue.id);
+        await setDoc(venueDocRef, { ...selectedVenue, status: 'closed' }, { merge: true });
+      }
   
       // Reset form fields after successful creation
       setName('');

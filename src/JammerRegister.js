@@ -80,7 +80,7 @@ const JammerRegister = ({ isOpen, onClose }) => {
         console.log('User already exists in Firestore');
       }
 
-      navigate('/JamSessions');
+      navigate('/s');
     } catch (error) {
       setError(error.message);
       console.error('Google sign-in error:', error.message);
