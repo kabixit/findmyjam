@@ -3,7 +3,7 @@ import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import { app, db, storage } from './firebaseConfig';
 import { Box, Text, Button, useDisclosure, Input, Textarea, FormControl, FormLabel, Checkbox, Stack } from '@chakra-ui/react';
 import { useNavigate } from 'react-router-dom';
-import { collection, addDoc, doc, getDoc, getDocs } from 'firebase/firestore';
+import { collection, addDoc, query, where, getDocs } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import VenueOwnerLogin from './VenueOwnerLogin';
 import VenueOwnerRegister from './VenueOwnerRegister';
@@ -11,6 +11,7 @@ import VenueOwnerRegister from './VenueOwnerRegister';
 const AddStudio = () => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isVenueOwner, setIsVenueOwner] = useState(false);
   const { isOpen: isLoginOpen, onOpen: onLoginOpen, onClose: onLoginClose } = useDisclosure();
   const { isOpen: isRegisterOpen, onOpen: onRegisterOpen, onClose: onRegisterClose } = useDisclosure();
   const navigate = useNavigate();
@@ -39,24 +40,29 @@ const AddStudio = () => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
         setUser(user);
-        setLoading(false);
+        setLoading(true);
 
         // Check user role in Firestore
         try {
-          const userRef = doc(db, 'users', user.uid);
-          const docSnap = await getDoc(userRef);
-          if (docSnap.exists()) {
-            const userData = docSnap.data();
-            // Assuming userData.role exists and is either 'venueOwner' or another role you define
-            if (userData.role !== 'venueOwner') {
+          const q = query(collection(db, 'users'), where('email', '==', user.email));
+          const querySnapshot = await getDocs(q);
+
+          if (!querySnapshot.empty) {
+            const userData = querySnapshot.docs[0].data();
+            if (userData.role === 'venueOwner') {
+              setIsVenueOwner(true);
+            } else {
               console.warn('User is not authorized as a venue owner');
-              navigate('/'); // Redirect to home or another appropriate page
+             // Redirect to home or another appropriate page
             }
           } else {
             console.warn('No such document!');
+            navigate('/'); // Redirect to home or another appropriate page
           }
         } catch (error) {
           console.error('Error fetching user role:', error);
+        } finally {
+          setLoading(false);
         }
       } else {
         setUser(null);
@@ -112,12 +118,12 @@ const AddStudio = () => {
     }));
   };
 
-  // Function to handle image upload (assuming this function uploads to Firebase Storage)
+  // Function to handle image upload (unchanged)
   const handleImageUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
-    
-    const storageRef = ref(storage, `images/${file.name}`); // Correct usage of storage.ref()
+
+    const storageRef = ref(storage, `images/${file.name}`);
     try {
       await uploadBytes(storageRef, file);
       const imageUrl = await getDownloadURL(storageRef);
@@ -125,7 +131,6 @@ const AddStudio = () => {
       console.log('Image uploaded successfully:', imageUrl);
     } catch (error) {
       console.error('Error uploading image:', error);
-      // Handle error
     }
   };
 
@@ -150,6 +155,14 @@ const AddStudio = () => {
         </Button>
         <VenueOwnerLogin isOpen={isLoginOpen} onClose={onLoginClose} />
         <VenueOwnerRegister isOpen={isRegisterOpen} onClose={onRegisterClose} />
+      </Box>
+    );
+  }
+
+  if (!isVenueOwner) {
+    return (
+      <Box p={8} textAlign="center">
+        <Text>You are not authorized to add a studio.</Text>
       </Box>
     );
   }
@@ -187,7 +200,6 @@ const AddStudio = () => {
       <FormControl mb={4}>
         <FormLabel>Media (Image)</FormLabel>
         <Input type="file" onChange={handleImageUpload} />
-        {/* Display uploaded image preview if needed */}
       </FormControl>
       <FormControl mb={4}>
         <FormLabel>Description</FormLabel>

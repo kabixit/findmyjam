@@ -1,12 +1,17 @@
 import React, { useEffect, useState } from 'react';
-import { db, auth } from './firebaseConfig';
+import { db } from './firebaseConfig';
 import { collection, getDocs, getDoc, orderBy, query, doc, addDoc, where, setDoc } from 'firebase/firestore';
 import { Box, Button, Heading, List, ListItem, Text, VStack, HStack, useToast } from '@chakra-ui/react';
 import { CheckIcon } from '@chakra-ui/icons';
 import { getAuth } from 'firebase/auth';
+import JammerLogin from './JammerLogin'; // Assuming JammerLogin component file path
+import JammerRegister from './JammerRegister'; // Assuming JammerRegister component file path
 
 const ShowAllJams = ({ currentLocation }) => {
   const [jams, setJams] = useState([]);
+  const [joinedJamIds, setJoinedJamIds] = useState([]);
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  const [showRegisterModal, setShowRegisterModal] = useState(false);
   const toast = useToast();
   const auth = getAuth();
 
@@ -17,28 +22,33 @@ const ShowAllJams = ({ currentLocation }) => {
       setJams(jamsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
     };
 
+    const fetchJoinedJams = async () => {
+      const user = auth.currentUser;
+      if (user) {
+        const jamMembersRef = collection(db, 'jamMembers');
+        const joinedJamsQuery = query(jamMembersRef, where('userId', '==', user.email));
+        const joinedJamsSnapshot = await getDocs(joinedJamsQuery);
+        setJoinedJamIds(joinedJamsSnapshot.docs.map(doc => doc.data().jamId));
+      }
+    };
+
     fetchJams();
-  }, []);
+    fetchJoinedJams();
+  }, [auth]);
 
   const joinJam = async (jamId) => {
     try {
       const user = auth.currentUser;
-  
+
       if (!user) {
-        toast({
-          title: 'Error',
-          description: 'You must be logged in to join a jam session.',
-          status: 'error',
-          duration: 3000,
-          isClosable: true,
-        });
+        setShowLoginModal(true);
         return;
       }
-  
+
       // Check if the user has already joined this jam session
       const jamMembersRef = collection(db, 'jamMembers');
       const querySnapshot = await getDocs(query(jamMembersRef, where('jamId', '==', jamId), where('userId', '==', user.email)));
-      
+
       if (!querySnapshot.empty) {
         toast({
           title: 'Already Joined',
@@ -49,25 +59,27 @@ const ShowAllJams = ({ currentLocation }) => {
         });
         return;
       }
-  
+
       // Add user to jamMembers collection
       await addDoc(jamMembersRef, {
         jamId: jamId,
         userId: user.email,
       });
-  
+
       // Update membersCount in jamSessions collection
       const jamSessionRef = doc(db, 'jamSessions', jamId);
       const jamSessionDoc = await getDoc(jamSessionRef);
-  
+
       if (!jamSessionDoc.exists()) {
         console.error('Jam session document does not exist.');
         return;
       }
-  
+
       const currentMembersCount = jamSessionDoc.data().membersCount || 0;
       await setDoc(jamSessionRef, { membersCount: currentMembersCount + 1 }, { merge: true });
-  
+
+      setJoinedJamIds(prev => [...prev, jamId]);
+
       toast({
         title: 'Joined the jam session!',
         status: 'success',
@@ -85,7 +97,6 @@ const ShowAllJams = ({ currentLocation }) => {
       });
     }
   };
-  
 
   return (
     <Box bg="black" color="white" p={6} borderRadius="md" boxShadow="xl">
@@ -102,20 +113,48 @@ const ShowAllJams = ({ currentLocation }) => {
                 <Text><strong>Location:</strong> {jam.location}</Text>
                 <Text><strong>Required Instruments:</strong> {jam.requiredInstruments.join(', ')}</Text>
                 <Text><strong>Jammers Joined:</strong> {jam.membersCount}</Text>
-                <Button
-                  color="black"
-                  bg="white"
-                  onClick={() => joinJam(jam.id)}
-                  rightIcon={<CheckIcon />}
-                  isDisabled={auth.currentUser?.email === jam.createdBy}
-                >
-                  Join
-                </Button>
+                {joinedJamIds.includes(jam.id) ? (
+                  <Button color="black" bg="gray" isDisabled>
+                    Already Joined
+                  </Button>
+                ) : (
+                  <Button
+                    color="black"
+                    bg="white"
+                    onClick={() => joinJam(jam.id)}
+                    rightIcon={<CheckIcon />}
+                    isDisabled={auth.currentUser?.email === jam.createdBy}
+                  >
+                    Join
+                  </Button>
+                )}
               </VStack>
             </HStack>
           </ListItem>
         ))}
       </List>
+
+      {/* Modal for JammerLogin or JammerRegister */}
+      {showLoginModal && (
+        <JammerLogin
+          isOpen={showLoginModal}
+          onClose={() => setShowLoginModal(false)}
+          onRegisterClick={() => {
+            setShowLoginModal(false);
+            setShowRegisterModal(true);
+          }}
+        />
+      )}
+      {showRegisterModal && (
+        <JammerRegister
+          isOpen={showRegisterModal}
+          onClose={() => setShowRegisterModal(false)}
+          onLoginClick={() => {
+            setShowRegisterModal(false);
+            setShowLoginModal(true);
+          }}
+        />
+      )}
     </Box>
   );
 };

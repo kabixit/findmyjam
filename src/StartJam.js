@@ -53,25 +53,25 @@ const StartJam = ({ currentLocation }) => {
     e.preventDefault();
     const auth = getAuth();
     const user = auth.currentUser;
-  
+
     if (!user) {
       setShowLoginModal(true);
       return;
     }
-  
+
     try {
       // Query Firestore for user document based on email
       const usersQuery = query(collection(db, 'users'), where('email', '==', user.email));
       const querySnapshot = await getDocs(usersQuery);
-  
+
       if (querySnapshot.empty) {
         console.warn('No matching documents.');
         return;
       }
-  
+
       // Assuming there is only one document per user email, so we take the first one
       const userDoc = querySnapshot.docs[0];
-  
+
       // Check if user has the 'jammer' role
       if (userDoc.data().role !== 'jammer') {
         toast({
@@ -83,12 +83,12 @@ const StartJam = ({ currentLocation }) => {
         });
         return;
       }
-  
+
       // Fetch current count of jam sessions to calculate next jamId
       const jamSessionsRef = collection(db, 'jamSessions');
       const jamSessionsSnapshot = await getDocs(jamSessionsRef);
       const jamId = jamSessionsSnapshot.size + 1; // Calculate new jamId
-  
+
       // Continue with creating the jam session using user data if permissions are correct
       const sessionData = {
         jamId,
@@ -104,7 +104,7 @@ const StartJam = ({ currentLocation }) => {
         membersCount: 1,
         createdAt: new Date(),
       };
-  
+
       await addDoc(collection(db, 'jamSessions'), sessionData);
       toast({
         title: 'Jam session created!',
@@ -112,13 +112,13 @@ const StartJam = ({ currentLocation }) => {
         duration: 3000,
         isClosable: true,
       });
-  
+
       // Update the status of selected venue to 'closed' in venues collection
       if (venueType === 'studio' && selectedVenue) {
         const venueDocRef = doc(db, 'venues', selectedVenue.id);
         await setDoc(venueDocRef, { ...selectedVenue, status: 'closed' }, { merge: true });
       }
-  
+
       // Reset form fields after successful creation
       setName('');
       setDate(new Date());
