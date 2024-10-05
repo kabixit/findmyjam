@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Box, Heading } from '@chakra-ui/react';
+import { Box, Heading, Text } from '@chakra-ui/react';
 import LocationPrompt from './LocationPrompt';
 import ShowAllJams from './ShowAllJams';
 import StartJam from './StartJam';
@@ -8,20 +8,33 @@ import StudioComponent from './components/StudioComponent'; // Import StudioComp
 const Home = () => {
   const [location, setLocation] = useState(null);
 
-  const handleAddVenue = () => {
-    // Implement logic to handle adding venue/studio
-    alert('Add Venue functionality to be implemented.');
-  };
+
 
   return (
     <Box bg="black" color="white" p={4} borderRadius="md">
-      <Heading as="h1" mb={4}>FindMyJam.io</Heading>
+      <Text 
+        mt={5}
+        mb={2} 
+        color="white" 
+        fontSize="4xl"  // Adjust the font size as needed
+        textAlign="center" // Centers the text horizontally
+      >
+        Find My Jam
+      </Text>
+      <Text 
+        mb={2} 
+        color="white" 
+        fontSize="2xl"  // Adjust the font size as needed
+        textAlign="center" // Centers the text horizontally
+      >
+        "Your Music, Your Vibe, Your Jam"
+      </Text>
       {!location && <LocationPrompt onLocationReceived={setLocation} />}
       {location && (
         <>
           <ShowAllJams location={location} />
           <StartJam location={location} />
-          <StudioComponent onAddVenue={handleAddVenue} /> {/* Render StudioComponent */}
+          {/* <StudioComponent onAddVenue={handleAddVenue} />  */}
         </>
       )}
     </Box>

@@ -150,7 +150,14 @@ const StartJam = ({ currentLocation }) => {
 
   return (
     <Box bg="black" color="white" p={8} borderRadius="md">
-      <Heading mb={6} color="white">Start a Jam</Heading>
+      <Text 
+        mb={2} 
+        color="white" 
+        fontSize="3xl"  // Adjust the font size as needed
+        textAlign="center" // Centers the text horizontally
+      >
+        Start a Jam
+      </Text>
       <form onSubmit={handleCreateSession}>
         <Stack spacing={4}>
           <FormControl isRequired>
@@ -163,13 +170,28 @@ const StartJam = ({ currentLocation }) => {
             />
           </FormControl>
           <FormControl isRequired>
-            <FormLabel>Date and Time</FormLabel>
+            <FormLabel color="white">Date and Time</FormLabel>
             <DatePicker
               selected={date}
               onChange={(date) => setDate(date)}
               showTimeSelect
               dateFormat="Pp"
               className="react-datepicker__input-container"
+              // Inline styling for input container
+              customInput={
+                <input
+                  style={{
+                    backgroundColor: '#0000',
+                    borderRadius: '8px',
+                    border: '1px solid #ccc',
+                    padding: '10px',
+                    fontSize: '16px',
+                    width: '100%',
+                  }}
+                />
+              }
+              // Inline style for the calendar popup
+              popperClassName="react-datepicker-popper"
             />
           </FormControl>
           <FormControl isRequired>
@@ -216,7 +238,7 @@ const StartJam = ({ currentLocation }) => {
           <FormControl>
             <FormLabel>Required Instruments</FormLabel>
             <Stack spacing={2}>
-              {['Guitar', 'Bass', 'Drums', 'Piano/keyboards', 'Vocals/Beatbox'].map((instrument) => (
+              {['Guitar', 'Bass', 'Drums', 'keyboards', 'Vocals/Beatbox'].map((instrument) => (
                 <Checkbox
                   key={instrument}
                   colorScheme="blue"

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { db } from './firebaseConfig';
 import { collection, getDocs, getDoc, orderBy, query, doc, addDoc, where, setDoc } from 'firebase/firestore';
 import { Box, Button, Heading, List, ListItem, Text, VStack, HStack, useToast } from '@chakra-ui/react';
-import { CheckIcon } from '@chakra-ui/icons';
+import { CheckIcon} from '@chakra-ui/icons';
 import { getAuth } from 'firebase/auth';
 import JammerLogin from './JammerLogin'; // Assuming JammerLogin component file path
 import JammerRegister from './JammerRegister'; // Assuming JammerRegister component file path
@@ -14,6 +14,23 @@ const ShowAllJams = ({ currentLocation }) => {
   const [showRegisterModal, setShowRegisterModal] = useState(false);
   const toast = useToast();
   const auth = getAuth();
+
+
+  const openLocationInNewTab = (url) => {
+    // Check if the URL is valid and prepend 'http://' if necessary
+    if (url) {
+      window.open(url, '_blank');
+    } else {
+      toast({
+        title: 'Invalid Location',
+        description: 'The location URL is not valid.',
+        status: 'error',
+        duration: 3000,
+        isClosable: true,
+      });
+    }
+  };
+  
 
   useEffect(() => {
     const fetchJams = async () => {
@@ -100,7 +117,14 @@ const ShowAllJams = ({ currentLocation }) => {
 
   return (
     <Box bg="black" color="white" p={6} borderRadius="md" boxShadow="xl">
-      <Heading mb={6} color="white">All Jams</Heading>
+      <Text 
+        mb={2} 
+        color="white" 
+        fontSize="3xl"  // Adjust the font size as needed
+        textAlign="center" // Centers the text horizontally
+      >
+        All Jams
+      </Text>
       <List spacing={4}>
         {jams.map(jam => (
           <ListItem key={jam.id} bg="black" p={4} borderRadius="md" boxShadow="md" border="1px dashed #fff">
@@ -113,6 +137,7 @@ const ShowAllJams = ({ currentLocation }) => {
                 <Text><strong>Location:</strong> {jam.location}</Text>
                 <Text><strong>Required Instruments:</strong> {jam.requiredInstruments.join(', ')}</Text>
                 <Text><strong>Jammers Joined:</strong> {jam.membersCount}</Text>
+                <HStack align="start">
                 {joinedJamIds.includes(jam.id) ? (
                   <Button color="black" bg="gray" isDisabled>
                     Already Joined
@@ -128,6 +153,14 @@ const ShowAllJams = ({ currentLocation }) => {
                     Join
                   </Button>
                 )}
+                <Button
+                  color="black"
+                  bg="white"
+                  onClick={() => openLocationInNewTab(jam.location)}
+                >
+                  Location
+                </Button>
+                </HStack>
               </VStack>
             </HStack>
           </ListItem>

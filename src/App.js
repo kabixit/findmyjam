@@ -7,6 +7,7 @@ import AddStudio from './AddStudio';
 import StartJam from './StartJam';
 import Login from './Login';
 import SignUp from './SignUp';
+import VerifyEmail from './VerifyEmail';
 
 
 function App() {
@@ -19,6 +20,7 @@ function App() {
         <Route path="/StartJam" element={<StartJam/>}/>
         <Route path="/Login" element={<Login/>}/>
         <Route path="/SignUp" element={<SignUp/>}/>
+        <Route path="/verify-email" element={<VerifyEmail/>}/>
       </Routes>
     </Router>
   );

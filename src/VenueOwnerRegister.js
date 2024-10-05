@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { getAuth, createUserWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
+import { getAuth, createUserWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, sendEmailVerification } from 'firebase/auth';
 import { app, db } from './firebaseConfig';
 import { Box, Image, Text, Input, Stack, Button, Modal, ModalOverlay, ModalContent, ModalHeader, ModalFooter, ModalBody, ModalCloseButton } from '@chakra-ui/react';
 import { useNavigate } from 'react-router-dom';
@@ -9,28 +9,29 @@ const VenueOwnerRegister = ({ isOpen, onClose }) => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [username, setUsername] = useState('');
   const [error, setError] = useState(null);
   const navigate = useNavigate();
 
-  // Function to handle venue owner registration with email and password
   const handleSignUp = async (e) => {
     e.preventDefault();
     const auth = getAuth(app);
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
-      console.log('User signed up:', user);
 
-      // Add additional user details to Firestore database
+      // Send email verification
+      await sendEmailVerification(user);
+      alert('A verification email has been sent. Please verify your email before logging in.');
+
       const usersRef = collection(db, 'users');
-      const newUserRef = await addDoc(usersRef, {
+      await addDoc(usersRef, {
         name: name,
         email: email,
-        role: 'venueOwner', // Default role for regular sign-up
+        role: 'venueOwner',
       });
-      console.log('New user added to Firestore with ID:', newUserRef.id);
-      navigate('/AddStudio');
+
+      // Redirect to verification page
+      navigate('/verify-email');
     } catch (error) {
       setError(error.message);
       console.error('Sign-up error:', error.message);

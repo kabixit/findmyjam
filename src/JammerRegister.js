@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { getAuth, createUserWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
+import { getAuth, createUserWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, sendEmailVerification } from 'firebase/auth';
 import { app, db } from './firebaseConfig';
 import { Box, Image, Text, Input, Stack, Button, Modal, ModalOverlay, ModalContent, ModalHeader, ModalFooter, ModalBody, ModalCloseButton } from '@chakra-ui/react';
 import { useNavigate } from 'react-router-dom';
@@ -26,11 +26,14 @@ const JammerRegister = ({ isOpen, onClose }) => {
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
-      console.log('User signed up:', user);
+
+      // Send email verification
+      await sendEmailVerification(user);
+      alert('A verification email has been sent. Please verify your email before logging in.');
 
       // Add additional user details to Firestore database
       const usersRef = collection(db, 'users');
-      const newUserRef = await addDoc(usersRef, {
+      await addDoc(usersRef, {
         name: name,
         email: email,
         role: 'jammer',
@@ -38,14 +41,14 @@ const JammerRegister = ({ isOpen, onClose }) => {
         genres: genres.split(',').map((genre) => genre.trim()),
         socialLinks: socialLinks,
       });
-      console.log('New user added to Firestore with ID:', newUserRef.id);
-      navigate('/JamSessions');
+
+      // Redirect to a verification page or back to login
+      navigate('/verify-email'); // You can create this route/page with appropriate instructions
     } catch (error) {
       setError(error.message);
       console.error('Sign-up error:', error.message);
     }
   };
-
   // Function to handle Google sign-in
   const handleGoogleSignUp = async () => {
     const auth = getAuth(app);
